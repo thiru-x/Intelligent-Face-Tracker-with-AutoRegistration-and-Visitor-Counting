@@ -182,5 +182,4 @@ because of occlusion, pose, lighting, camera quality, threshold choice, or
 similar-looking faces; do not use this prototype as the sole basis for
 high-impact decisions.
 
-This project is part of a hackathon run by https://katomaran.com#   I n t e l l i g e n t - F a c e - T r a c k e r - w i t h - A u t o R e g i s t r a t i o n - a n d - V i s i t o r - C o u n t i n g   H a c k a t h o n  
- 
+This project is part of a hackathon run by https://katomaran.com
