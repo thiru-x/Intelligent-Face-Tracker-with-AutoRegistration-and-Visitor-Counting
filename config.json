@@ -1,0 +1,29 @@
+
+{
+  "video_source": "sample_source/samp3.mp4",
+  "rtsp_url": "",
+  "use_rtsp": false,
+  "rtsp_transport": "tcp",
+  "network_open_timeout_seconds": 10,
+  "network_read_timeout_seconds": 10,
+  "network_reconnect_attempts": 5,
+  "network_reconnect_delay_seconds": 1,
+  "detection_skip_frames": 8,
+  "face_detection_confidence": 0.2,
+  "min_face_size": 6,
+  "min_face_detection_score": 0.35,
+  "min_face_width": 12,
+  "min_face_height": 12,
+  "run_yolo_diagnostics": false,
+  "recognition_threshold": 0.45,
+  "embedding_box_iou_threshold": 0.3,
+  "tracker_max_lost_frames": 30,
+  "database_path": "data/visitors.db",
+  "log_directory": "logs",
+  "face_image_quality": 95,
+  "camera_exit_timeout_seconds": 3,
+  "model_name": "buffalo_l",
+  "yolo_face_model": "models/yolov8n-face.pt",
+  "device": "CPU"
+  
+}
