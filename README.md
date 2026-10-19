@@ -192,4 +192,9 @@ because of occlusion, pose, lighting, camera quality, threshold choice, or
 similar-looking faces; do not use this prototype as the sole basis for
 high-impact decisions.
 
+
+
+LOOM SCREEN RECORDING VIDEO URL :
+  https://www.loom.com/share/9bf693e3f37b42dd84c484d1487325e6
+  
 This project is a part of a hackathon run by https://katomaran.com
