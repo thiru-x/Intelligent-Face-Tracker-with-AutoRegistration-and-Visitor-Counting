@@ -177,6 +177,16 @@ accepts as well as false rejects before using the system for consequential
 decisions. Frame skipping and inference resolution trade speed for the chance
 of missing small or fast-moving faces. Measure FPS on the deployment hardware.
 
+## Sample outputs
+
+The [`sample_outputs/`](sample_outputs/) folder contains synthetic examples of
+the audit log, SQLite visitor/event records, and entry/exit image evidence.
+These examples are not exports from a real visitor session: the database uses
+a synthetic placeholder vector, and the SVG images contain no captured faces.
+The local database, logs, sample videos, and biometric crops are intentionally
+excluded from Git. Use consented, privacy-reviewed data if you prepare actual
+video-run evidence for a restricted submission.
+
 ## Data and privacy
 
 Face embeddings and saved face crops are sensitive biometric data. Obtain

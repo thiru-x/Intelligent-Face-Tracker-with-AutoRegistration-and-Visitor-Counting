@@ -1,0 +1,6 @@
+{"audit_id":1,"details":{"bbox":[120,80,260,240],"confidence":0.97},"event_type":"FACE_DETECTED","face_id":null,"frame_number":120,"timestamp":"2026-10-18T10:00:00+00:00"}
+{"audit_id":2,"details":{"embedding_dimension":512,"embedding_model":"synthetic-placeholder","embedding_values_omitted":true},"event_type":"FACE_EMBEDDING_GENERATED","face_id":null,"frame_number":120,"timestamp":"2026-10-18T10:00:00+00:00"}
+{"audit_id":3,"details":{"embedding_dimension":512,"embedding_model":"synthetic-placeholder","is_new_identity":true},"event_type":"FACE_REGISTERED","face_id":"FACE_DEMO_0001","frame_number":120,"timestamp":"2026-10-18T10:00:00+00:00"}
+{"audit_id":4,"details":{"track_id":7},"event_type":"FACE_TRACKED","face_id":"FACE_DEMO_0001","frame_number":120,"timestamp":"2026-10-18T10:00:00+00:00"}
+{"audit_id":5,"details":{"event_id":1,"image_path":"sample_outputs/images/entry-placeholder.svg","source_timestamp":4.0},"event_type":"VISITOR_ENTRY","face_id":"FACE_DEMO_0001","frame_number":120,"timestamp":"2026-10-18T10:00:00+00:00"}
+{"audit_id":6,"details":{"event_id":2,"image_path":"sample_outputs/images/exit-placeholder.svg","source_timestamp":9.5},"event_type":"VISITOR_EXIT","face_id":"FACE_DEMO_0001","frame_number":285,"timestamp":"2026-10-18T10:00:05+00:00"}
