@@ -27,12 +27,19 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-The repository expects `models/yolov8n-face.pt` to be present. Model files
-must be obtained from a trusted source and used in accordance with their
-licenses. InsightFace may download its configured recognition model the
-first time it starts; that is a model download, not an upload of camera frames.
-The browser dashboard binds to loopback only and does not transmit face data
-to a remote service.
+The YOLO face-detection weights are included at
+`models/yolov8n-face.pt`. They detect face boxes; they do not identify people.
+The repository does not currently document the weights' upstream source or
+license, so verify the original distribution terms before redistributing or
+using them beyond this project. Including the file here is not a claim that it
+is open-source or licensed for every use. InsightFace may download its
+configured recognition model the first time it starts; that is a model
+download, not an upload of camera frames. The browser dashboard binds to
+loopback only and does not transmit face data to a remote service.
+
+This application is designed to run locally; deploying it to Netlify or
+another static-site host is not required. The dashboard is intentionally
+restricted to loopback and must not be exposed through a public proxy.
 
 Run the configured video source:
 
