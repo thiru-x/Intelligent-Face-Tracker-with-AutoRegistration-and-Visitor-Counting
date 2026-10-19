@@ -19,100 +19,400 @@ from app.pipeline import VideoPipeline, load_config
 LOGGER = logging.getLogger("katomaran.web")
 MAX_REQUEST_BYTES = 8192
 
-PAGE = """<!doctype html>
+PAGE = r"""<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Local Visitor Monitor</title>
+  <meta name="theme-color" content="#101816">
+  <meta name="description" content="Local-first face visitor monitoring dashboard">
+  <title>Framewise — Local Visitor Monitor</title>
   <style>
-    :root { color-scheme: dark; font: 16px/1.5 system-ui, sans-serif;
-      background: #10151b; color: #e7edf4; }
-    body { margin: 0 auto; max-width: 1180px; padding: 28px 20px; }
-    h1 { margin: 0; font-size: 1.7rem; }
-    .subtle, small { color: #9ba9b8; }
-    header { display: flex; justify-content: space-between; gap: 20px;
-      align-items: center; margin-bottom: 22px; }
-    .status { border: 1px solid #3c4b5a; border-radius: 20px;
-      padding: 5px 12px; text-transform: capitalize; }
-    .layout { display: grid; grid-template-columns: minmax(0, 2fr)
-      minmax(260px, 1fr); gap: 18px; }
-    section { background: #19212a; border: 1px solid #293542;
-      border-radius: 12px; padding: 18px; }
-    .video { min-height: 310px; display: grid; place-items: center;
-      background: #080b0f; border-radius: 8px; overflow: hidden; }
-    .video img { width: 100%; max-height: 65vh; object-fit: contain; }
-    .metrics { display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 10px; margin-top: 16px; }
-    .metric { background: #111820; border-radius: 8px; padding: 12px; }
-    .metric strong { display: block; font-size: 1.55rem; }
-    label { display: block; font-size: .9rem; margin: 14px 0 5px; }
-    input { box-sizing: border-box; width: 100%; padding: 10px;
-      border: 1px solid #465564; border-radius: 6px;
-      background: #0f151c; color: inherit; }
-    button { border: 0; border-radius: 6px; padding: 10px 15px;
-      margin: 12px 8px 0 0; cursor: pointer; color: #08121b;
-      background: #6fd3b0; font-weight: 700; }
-    button.stop { background: #ff987f; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    .message { min-height: 24px; color: #ffd38b; margin-top: 10px; }
-    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-    th, td { padding: 9px 5px; border-bottom: 1px solid #303b47;
-      text-align: left; vertical-align: top; }
-    th { color: #aebdcb; }
-    .events { margin-top: 18px; overflow-x: auto; }
-    @media (max-width: 760px) {
-      .layout { grid-template-columns: 1fr; }
-      header { align-items: flex-start; flex-direction: column; }
-      .video { min-height: 200px; }
+    :root {
+      color-scheme: dark;
+      font: 15px/1.5 Inter, "Segoe UI", system-ui, sans-serif;
+      background: #101816;
+      color: #edf4f0;
+      --muted: #93a69c;
+      --line: #293831;
+      --panel: #17211c;
+      --panel-raised: #1c2922;
+      --mint: #a4f4c5;
+      --mint-ink: #13241a;
+      --amber: #f4ca7c;
+      --red: #ff9e91;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 88% 0%, #22382b 0, transparent 36rem),
+        #101816;
+      min-height: 100vh;
+    }
+    button, input { font: inherit; }
+    button:focus-visible, input:focus-visible, a:focus-visible {
+      outline: 2px solid var(--mint);
+      outline-offset: 3px;
+    }
+    .shell { width: min(1320px, 100% - 48px); margin: 0 auto; }
+    .topbar {
+      min-height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #26352d;
+    }
+    .brand { display: flex; gap: 11px; align-items: center; color: inherit;
+      text-decoration: none; font-size: 1.02rem; font-weight: 750; }
+    .brand-mark {
+      width: 37px; height: 37px; border-radius: 12px; display: grid;
+      place-items: center; color: var(--mint); background: #20382a;
+    }
+    .brand-copy { display: grid; line-height: 1.15; }
+    .brand-copy small { color: var(--muted); font-size: .59rem;
+      letter-spacing: .16em; margin-top: 5px; }
+    .topbar-right { display: flex; gap: 10px; align-items: center; }
+    .local-tag, .status {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 7px 12px; font-size: .75rem; font-weight: 650;
+    }
+    .local-tag { color: #b9e8c9; background: #192820; }
+    .local-dot, .state-dot {
+      width: 7px; height: 7px; border-radius: 50%; background: #829188;
+    }
+    .local-dot { background: var(--mint); }
+    .status { color: #bdc9c1; text-transform: capitalize; }
+    .status[data-state="running"] { color: var(--mint); border-color: #42694e; }
+    .status[data-state="running"] .state-dot {
+      background: var(--mint); box-shadow: 0 0 12px #a4f4c5a0;
+      animation: pulse 1.7s ease-in-out infinite;
+    }
+    .status[data-state="error"] { color: var(--red); border-color: #69413b; }
+    .status[data-state="error"] .state-dot { background: var(--red); }
+    .status[data-state="reconnecting"],
+    .status[data-state="starting"] { color: var(--amber); }
+    .status[data-state="reconnecting"] .state-dot,
+    .status[data-state="starting"] .state-dot { background: var(--amber); }
+    main { padding: 38px 0 28px; }
+    .intro {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      gap: 24px; margin-bottom: 25px;
+    }
+    .eyebrow {
+      margin: 0 0 9px; color: var(--mint); font-size: .72rem;
+      font-weight: 750; letter-spacing: .17em; text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.15rem);
+      line-height: 1.05; letter-spacing: -.045em; font-weight: 680; }
+    h1 em { color: var(--mint); font-style: normal; }
+    .intro-copy { max-width: 620px; color: #a5b5ac; margin: 12px 0 0; }
+    .model-tags { display: flex; gap: 7px; flex-wrap: wrap;
+      justify-content: flex-end; padding-bottom: 3px; }
+    .model-tags span {
+      color: #afc0b5; border: 1px solid var(--line); border-radius: 7px;
+      padding: 6px 9px; font-size: .67rem; letter-spacing: .055em;
+    }
+    .metrics {
+      display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 13px; margin-bottom: 17px;
+    }
+    .metric {
+      position: relative; overflow: hidden; min-height: 116px;
+      border: 1px solid var(--line); border-radius: 14px;
+      background: linear-gradient(145deg, #1a261f, #15201a);
+      padding: 17px 19px;
+    }
+    .metric::after {
+      content: ""; position: absolute; width: 90px; height: 90px;
+      border-radius: 50%; right: -36px; bottom: -58px;
+      background: #a4f4c512;
+    }
+    .metric-label { display: flex; justify-content: space-between; gap: 8px;
+      color: #a5b5ab; font-size: .78rem; }
+    .metric-label span:last-child { color: #73887a; font-size: .65rem; }
+    .metric strong { display: block; margin-top: 8px; font-size: 1.9rem;
+      line-height: 1.05; letter-spacing: -.045em; font-variant-numeric: tabular-nums; }
+    .metric strong small { color: var(--muted); font-size: .8rem;
+      font-weight: 550; letter-spacing: 0; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.8fr)
+      minmax(300px, .82fr); gap: 16px; align-items: stretch; }
+    .panel {
+      border: 1px solid var(--line); border-radius: 15px;
+      background: linear-gradient(150deg, #1a251f, #17211c);
+    }
+    .feed-panel { padding: 17px; min-width: 0; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; margin-bottom: 14px; }
+    .panel-title { margin: 0; font-size: .96rem; font-weight: 690; }
+    .panel-subtitle { color: var(--muted); font-size: .72rem; margin-top: 3px; }
+    .feed-badge { color: #a9b7ae; font-size: .7rem; }
+    .feed-stage {
+      min-height: 350px; position: relative; display: grid; place-items: center;
+      overflow: hidden; border-radius: 11px;
+      border: 1px solid #2b3c32;
+      background:
+        linear-gradient(#16221d9c, #16221d9c),
+        linear-gradient(90deg, #25352c 1px, transparent 1px),
+        linear-gradient(#25352c 1px, transparent 1px),
+        #101914;
+      background-size: auto, 36px 36px, 36px 36px, auto;
+    }
+    .feed-stage::before {
+      content: ""; position: absolute; inset: 22px;
+      border: 1px solid #a4f4c51a; border-radius: 5px; pointer-events: none;
+    }
+    .feed-stage img { width: 100%; height: 100%; max-height: 57vh;
+      object-fit: contain; position: absolute; inset: 0; }
+    .feed-live {
+      position: absolute; top: 13px; left: 13px; z-index: 1;
+      display: flex; align-items: center; gap: 7px; border-radius: 6px;
+      background: #111914db; color: var(--mint); padding: 6px 9px;
+      font-size: .65rem; font-weight: 750; letter-spacing: .08em;
+    }
+    .feed-live[hidden] { display: none; }
+    .feed-live span { width: 6px; height: 6px; border-radius: 50%;
+      background: var(--mint); }
+    .placeholder {
+      z-index: 1; display: grid; justify-items: center; gap: 10px;
+      max-width: 310px; padding: 24px; color: #a6b6ac; text-align: center;
+    }
+    .placeholder[hidden] { display: none; }
+    .placeholder-icon {
+      width: 48px; height: 48px; display: grid; place-items: center;
+      border: 1px solid #34483b; border-radius: 15px; color: var(--mint);
+      background: #1c2b22;
+    }
+    .placeholder strong { color: #dce9e0; font-size: .9rem; }
+    .placeholder span { font-size: .75rem; }
+    .feed-stats { display: flex; flex-wrap: wrap; gap: 8px 21px;
+      padding: 12px 2px 0; color: var(--muted); font-size: .72rem; }
+    .feed-stats strong { color: #dce9e0; font-weight: 650;
+      font-variant-numeric: tabular-nums; }
+    .source-panel { padding: 18px; }
+    .source-panel h2 { margin: 0; font-size: 1rem; }
+    .source-panel > p { margin: 6px 0 17px; color: var(--muted); font-size: .75rem; }
+    .tabs {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 4px;
+      padding: 4px; border-radius: 9px; background: #111a15;
+    }
+    .tab {
+      border: 0; border-radius: 7px; color: #9caea3; background: transparent;
+      padding: 9px 7px; font-size: .73rem; font-weight: 650; cursor: pointer;
+    }
+    .tab[aria-selected="true"] { color: #e8f4ec; background: #293a2f; }
+    .source-form[hidden] { display: none; }
+    label { display: block; margin: 17px 0 7px; color: #d5e0d9;
+      font-size: .75rem; font-weight: 600; }
+    input {
+      width: 100%; min-height: 43px; border: 1px solid #34463b;
+      border-radius: 8px; background: #111a15; color: #edf4f0;
+      padding: 10px 12px; font-size: .78rem;
+    }
+    input::placeholder { color: #697d70; }
+    .field-help { display: block; color: #8fa397; margin-top: 7px;
+      font-size: .67rem; line-height: 1.55; }
+    .actions { display: grid; grid-template-columns: 1fr auto; gap: 9px;
+      margin-top: 18px; }
+    .button {
+      min-height: 43px; border: 1px solid transparent; border-radius: 8px;
+      padding: 9px 12px; cursor: pointer; font-size: .77rem;
+      font-weight: 720; transition: background .18s, transform .18s;
+    }
+    .button:hover:not(:disabled) { transform: translateY(-1px); }
+    .button:disabled { opacity: .45; cursor: not-allowed; }
+    .button-primary { background: var(--mint); color: var(--mint-ink); }
+    .button-primary:hover:not(:disabled) { background: #b9f9d1; }
+    .button-stop { color: #ffc0b7; border-color: #68433d;
+      background: #30211f; }
+    .button-stop:hover:not(:disabled) { background: #402925; }
+    .message { min-height: 36px; margin: 13px 0 0; color: var(--amber);
+      font-size: .73rem; }
+    .privacy-note {
+      display: flex; align-items: flex-start; gap: 9px; margin-top: 13px;
+      border-top: 1px solid var(--line); padding-top: 13px;
+      color: #93a69a; font-size: .68rem;
+    }
+    .privacy-note svg { flex: 0 0 15px; color: var(--mint); }
+    .events-panel { margin-top: 16px; padding: 18px; }
+    .event-count {
+      border: 1px solid var(--line); border-radius: 999px;
+      color: #afc0b5; padding: 4px 9px; font-size: .67rem;
+    }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; min-width: 620px; border-collapse: collapse;
+      font-size: .74rem; }
+    th, td { text-align: left; padding: 11px 9px;
+      border-bottom: 1px solid #293831; vertical-align: middle; }
+    th { color: #91a397; font-size: .65rem; font-weight: 650;
+      letter-spacing: .07em; text-transform: uppercase; }
+    td { color: #d9e4dc; }
+    tbody tr:last-child td { border-bottom: 0; }
+    .empty-cell { color: var(--muted); text-align: center; padding: 24px; }
+    .event-type { display: inline-block; border-radius: 999px;
+      padding: 3px 8px; font-size: .62rem; font-weight: 750; }
+    .event-entry { color: var(--mint); background: #203a2b; }
+    .event-exit { color: #ffc2b8; background: #3b2927; }
+    .footer-note { display: flex; justify-content: space-between; gap: 16px;
+      padding: 18px 2px 25px; color: #829489; font-size: .68rem; }
+    @keyframes pulse { 50% { opacity: .48; } }
+    @media (max-width: 900px) {
+      .intro { align-items: flex-start; flex-direction: column; }
+      .model-tags { justify-content: flex-start; }
+      .workspace { grid-template-columns: minmax(0, 1fr) minmax(260px, .82fr); }
+    }
+    @media (max-width: 700px) {
+      .shell { width: min(100% - 28px, 600px); }
+      .topbar { min-height: 66px; }
+      .brand-copy small { display: none; }
+      .local-tag { font-size: 0; padding: 10px; }
+      .local-tag .local-dot { width: 8px; height: 8px; }
+      main { padding-top: 28px; }
+      .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .metric { min-height: 103px; padding: 14px; }
+      .metric strong { font-size: 1.65rem; }
+      .workspace { grid-template-columns: 1fr; }
+      .feed-stage { min-height: 240px; }
+      .events-panel { padding: 14px; }
+      .footer-note { flex-direction: column; gap: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important;
+        transition-duration: .01ms !important; }
     }
   </style>
 </head>
 <body>
-  <header>
-    <div><h1>Local Visitor Monitor</h1>
-      <div class="subtle">Video and visitor data stay on this machine.</div>
-    </div>
-    <span id="state" class="status">idle</span>
-  </header>
-  <main class="layout">
-    <section>
-      <div class="video">
-        <img id="stream" alt="Live processed camera/video feed" hidden>
-        <span id="placeholder" class="subtle">Start a video source to view output</span>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="Framewise dashboard home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none">
+            <path d="M4 8V5h3m10 0h3v3m0 8v3h-3M7 19H4v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M7.5 17c.6-2 2.1-3 4.5-3s3.9 1 4.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="brand-copy">Framewise<small>VISITOR INTELLIGENCE</small></span>
+      </a>
+      <div class="topbar-right">
+        <span class="local-tag"><span class="local-dot"></span>LOCAL ONLY</span>
+        <span id="state" class="status" data-state="idle">
+          <span class="state-dot"></span><span id="stateText">Idle</span>
+        </span>
       </div>
-      <div class="metrics">
-        <div class="metric"><small>Faces detected</small><strong id="faces">0</strong></div>
-        <div class="metric"><small>Currently present</small><strong id="present">0</strong></div>
-        <div class="metric"><small>Unique identities</small><strong id="unique">0</strong></div>
-        <div class="metric"><small>Total visits</small><strong id="visits">0</strong></div>
-      </div>
-      <p class="subtle">Processed FPS: <strong id="fps">0.0</strong>
-        &nbsp; | &nbsp; Frames read: <strong id="frames">0</strong></p>
-    </section>
-    <section>
-      <h2>Video source</h2>
-      <label for="source">Video path or RTSP stream URL</label>
-      <input id="source" placeholder="rtsp://camera-address:554/stream1">
-      <small>RTSP credentials are used locally and are not saved in the dashboard.</small>
-      <button id="start">Start processing</button>
-      <hr>
-      <label for="camera">Local camera index</label>
-      <input id="camera" type="number" min="0" step="1" value="0">
-      <button id="cameraStart">Start camera</button>
-      <button id="stop" class="stop" disabled>Stop</button>
-      <div id="message" class="message" role="status"></div>
-      <p class="subtle">The server binds to 127.0.0.1 only. Press Stop to close
-        an active visit and record its exit.</p>
-    </section>
-  </main>
-  <section class="events">
-    <h2>Recent entry/exit events</h2>
-    <table><thead><tr><th>Time (UTC)</th><th>Type</th><th>Face ID</th>
-      <th>Frame</th><th>Media time</th></tr></thead>
-      <tbody id="events"><tr><td colspan="5" class="subtle">No events yet</td></tr></tbody>
-    </table>
-  </section>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <div>
+          <p class="eyebrow">Live monitoring / local-first</p>
+          <h1 id="page-title">Know who arrives.<br><em>Count every visit.</em></h1>
+          <p class="intro-copy">Face detection, persistent identity matching and timestamped visitor events — processed on this machine.</p>
+        </div>
+        <div class="model-tags" aria-label="Processing components">
+          <span>YOLO FACE DETECTION</span><span>INSIGHTFACE EMBEDDINGS</span><span>SQLITE EVENTS</span>
+        </div>
+      </section>
+      <section class="metrics" aria-label="Visitor overview">
+        <article class="metric">
+          <div class="metric-label"><span>Unique identities</span><span>ALL TIME</span></div>
+          <strong id="unique">0</strong>
+        </article>
+        <article class="metric">
+          <div class="metric-label"><span>Total visits</span><span>ENTRY EVENTS</span></div>
+          <strong id="visits">0</strong>
+        </article>
+        <article class="metric">
+          <div class="metric-label"><span>Present now</span><span>THIS SOURCE</span></div>
+          <strong id="present">0</strong>
+        </article>
+        <article class="metric">
+          <div class="metric-label"><span>Processing rate</span><span>PROCESSED FPS</span></div>
+          <strong><span id="fps">0.0</span><small> fps</small></strong>
+        </article>
+      </section>
+      <section class="workspace" aria-label="Live feed and source controls">
+        <article class="panel feed-panel">
+          <div class="panel-head">
+            <div><h2 class="panel-title">Processed camera feed</h2>
+              <div class="panel-subtitle">Live annotated frames from the active source</div></div>
+            <span id="feedLabel" class="feed-badge">Waiting for source</span>
+          </div>
+          <div class="feed-stage">
+            <span id="feedLive" class="feed-live" hidden><span></span>LIVE FEED</span>
+            <img id="stream" alt="Live processed camera or video feed" hidden>
+            <div id="placeholder" class="placeholder">
+              <span class="placeholder-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="5" width="18" height="14" rx="3" stroke="currentColor" stroke-width="1.6"/>
+                  <path d="m10 9 5 3-5 3V9Z" fill="currentColor"/>
+                </svg>
+              </span>
+              <strong>Ready when you are</strong>
+              <span>Choose a video, RTSP stream or local camera to start processing.</span>
+            </div>
+          </div>
+          <div class="feed-stats">
+            <span>Frames read <strong id="frames">0</strong></span>
+            <span>Source FPS <strong id="sourceFps">—</strong></span>
+            <span>Faces in frame <strong id="faces">0</strong></span>
+          </div>
+        </article>
+        <aside class="panel source-panel">
+          <h2>Video source</h2>
+          <p>Choose how to connect the footage for this session.</p>
+          <div class="tabs" role="tablist" aria-label="Source type">
+            <button id="videoTab" class="tab" type="button" role="tab"
+              aria-selected="true" aria-controls="videoForm">Video / RTSP</button>
+            <button id="cameraTab" class="tab" type="button" role="tab"
+              aria-selected="false" aria-controls="cameraForm">Webcam</button>
+          </div>
+          <div id="videoForm" class="source-form" role="tabpanel" aria-labelledby="videoTab">
+            <label for="source">Video file path or RTSP URL</label>
+            <input id="source" type="text" autocomplete="off"
+              placeholder="C:\Videos\visitors.mp4 or rtsp://camera/stream">
+            <small class="field-help">Leave blank to use the configured default source. RTSP credentials are used for this session and are not saved by the dashboard.</small>
+          </div>
+          <div id="cameraForm" class="source-form" role="tabpanel"
+            aria-labelledby="cameraTab" hidden>
+            <label for="camera">Camera device index</label>
+            <input id="camera" type="number" min="0" step="1" value="0">
+            <small class="field-help">Use 0 for the default webcam, or try another index if multiple cameras are connected.</small>
+          </div>
+          <div class="actions">
+            <button id="start" class="button button-primary" type="button">Start processing</button>
+            <button id="stop" class="button button-stop" type="button" disabled>Stop</button>
+          </div>
+          <p id="message" class="message" role="status" aria-live="polite"></p>
+          <div class="privacy-note">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 3 5 6v5c0 4.5 2.8 8.2 7 10 4.2-1.8 7-5.5 7-10V6l-7-3Z" stroke="currentColor" stroke-width="1.7"/>
+              <path d="m9 12 2 2 4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Local dashboard bound to 127.0.0.1. Stopping a source records an exit for active visits.</span>
+          </div>
+        </aside>
+      </section>
+      <section class="panel events-panel" aria-labelledby="events-title">
+        <div class="panel-head">
+          <div><h2 id="events-title" class="panel-title">Recent entry &amp; exit events</h2>
+            <div class="panel-subtitle">Timestamped activity persisted in the local database</div></div>
+          <span id="eventCount" class="event-count">0 events</span>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Time (UTC)</th><th>Event</th><th>Face ID</th>
+            <th>Frame</th><th>Media time</th></tr></thead>
+            <tbody id="events"><tr><td colspan="5" class="empty-cell">No events recorded yet</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+      <footer class="footer-note">
+        <span>Detection and identity matching are separate stages. A tracker ID is temporary; a face ID persists in SQLite.</span>
+        <span>Local-first · SQLite · Structured audit trail</span>
+      </footer>
+    </main>
+  </div>
 <script>
 const $ = (id) => document.getElementById(id);
 const message = (text) => { $("message").textContent = text || ""; };
@@ -125,40 +425,51 @@ async function request(path, options) {
 function renderEvents(events) {
   const body = $("events");
   body.replaceChildren();
+  $("eventCount").textContent = `${events.length} ${events.length === 1 ? "event" : "events"}`;
   if (!events.length) {
     const row = body.insertRow();
     const cell = row.insertCell();
     cell.colSpan = 5;
-    cell.className = "subtle";
-    cell.textContent = "No events yet";
+    cell.className = "empty-cell";
+    cell.textContent = "No events recorded yet";
     return;
   }
   for (const event of events) {
     const row = body.insertRow();
-    for (const value of [
-      event.timestamp,
-      event.event_type.toUpperCase(),
-      event.face_id,
-      event.frame_number ?? "-",
-      event.source_timestamp == null ? "-" : `${event.source_timestamp.toFixed(2)}s`
-    ]) row.insertCell().textContent = value;
+    row.insertCell().textContent = event.timestamp;
+    const typeCell = row.insertCell();
+    const badge = document.createElement("span");
+    badge.className = `event-type event-${event.event_type}`;
+    badge.textContent = event.event_type.toUpperCase();
+    typeCell.appendChild(badge);
+    row.insertCell().textContent = event.face_id;
+    row.insertCell().textContent = event.frame_number ?? "—";
+    row.insertCell().textContent = event.source_timestamp == null
+      ? "—" : `${Number(event.source_timestamp).toFixed(2)}s`;
   }
 }
 async function refresh() {
   try {
     const data = await request("/api/status");
-    $("state").textContent = data.state;
+    $("state").dataset.state = data.state;
+    $("stateText").textContent = data.state;
+    $("feedLabel").textContent = data.state === "running"
+      ? "Source connected" : data.state === "reconnecting"
+        ? "Reconnecting…" : data.state === "error"
+          ? "Source error" : "Waiting for source";
     $("faces").textContent = data.faces_detected ?? 0;
     $("present").textContent = data.present ?? 0;
     $("unique").textContent = data.unique_identities ?? data.database_unique_identities;
     $("visits").textContent = data.visits ?? data.database_visits;
     $("fps").textContent = Number(data.processing_fps || 0).toFixed(1);
     $("frames").textContent = data.frames_read || 0;
+    $("sourceFps").textContent = Number(data.source_fps || 0) > 0
+      ? Number(data.source_fps).toFixed(1) : "—";
     $("start").disabled = ["starting", "running", "reconnecting", "stopping"].includes(data.state);
-    $("cameraStart").disabled = $("start").disabled;
     $("stop").disabled = !["starting", "running", "reconnecting"].includes(data.state);
     $("stream").hidden = !data.has_frame;
     $("placeholder").hidden = data.has_frame;
+    $("feedLive").hidden = !data.has_frame;
     if (data.has_frame && !$("stream").src) $("stream").src = "/video.mjpg";
     if (data.error) message(data.error);
     renderEvents(data.recent_events || []);
@@ -175,28 +486,44 @@ async function start(payload) {
       body: JSON.stringify(payload)
     });
     $("stream").src = `/video.mjpg?t=${Date.now()}`;
-    message("Processing started.");
+    message("Connecting to the selected source…");
     await refresh();
   } catch (error) {
     message(error.message);
   }
 }
+function selectSource(sourceType) {
+  const useCamera = sourceType === "camera";
+  $("videoTab").setAttribute("aria-selected", String(!useCamera));
+  $("cameraTab").setAttribute("aria-selected", String(useCamera));
+  $("videoForm").hidden = useCamera;
+  $("cameraForm").hidden = !useCamera;
+}
+$("videoTab").addEventListener("click", () => selectSource("video"));
+$("cameraTab").addEventListener("click", () => selectSource("camera"));
 $("start").addEventListener("click", () => {
+  if (!$("cameraForm").hidden) {
+    const camera = Number($("camera").value);
+    if (!Number.isInteger(camera) || camera < 0) {
+      message("Enter a non-negative camera index.");
+      return;
+    }
+    start({camera});
+    return;
+  }
   const source = $("source").value.trim();
   start(source ? {source} : {});
 });
-$("cameraStart").addEventListener("click", () => {
-  const camera = Number($("camera").value);
-  if (!Number.isInteger(camera) || camera < 0) {
-    message("Enter a non-negative camera index.");
-    return;
-  }
-  start({camera});
+$("source").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !$("start").disabled) $("start").click();
+});
+$("camera").addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !$("start").disabled) $("start").click();
 });
 $("stop").addEventListener("click", async () => {
   try {
     await request("/api/stop", {method: "POST"});
-    message("Stop requested.");
+    message("Stop requested. Active visits will be closed.");
   } catch (error) { message(error.message); }
 });
 setInterval(refresh, 1000);

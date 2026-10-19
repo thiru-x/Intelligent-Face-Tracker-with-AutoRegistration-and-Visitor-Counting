@@ -10,6 +10,16 @@ identity. InsightFace supplies face embeddings; its boxes are paired
 one-to-one with YOLO boxes by IoU overlap. A YOLO box without a sufficiently
 overlapping embedding is not registered as a person.
 
+## Architecture and project walkthrough
+
+![Architecture diagram](docs/architecture.svg)
+
+The [architecture diagram](docs/architecture.svg) shows the full frame-to-event
+flow. The [Loom walkthrough script](PROJECT_DEMO_SCRIPT.md) contains a timed
+narration, screen directions, configuration and FPS explanations, privacy
+notes, and a pre-recording checklist. Add the final Loom URL here before
+submitting the project.
+
 ## Windows setup
 
 Use Python 3.11 and create a virtual environment:
@@ -182,4 +192,4 @@ because of occlusion, pose, lighting, camera quality, threshold choice, or
 similar-looking faces; do not use this prototype as the sole basis for
 high-impact decisions.
 
-This project is part of a hackathon run by https://katomaran.com
+This project is a part of a hackathon run by https://katomaran.com

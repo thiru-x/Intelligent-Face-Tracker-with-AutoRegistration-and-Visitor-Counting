@@ -51,7 +51,13 @@ def test_dashboard_serves_page_and_status_api(dashboard_server):
     with urllib.request.urlopen(base_url + "/") as response:
         page = response.read().decode("utf-8")
         assert response.status == 200
-        assert "Local Visitor Monitor" in page
+        assert "Framewise" in page
+        assert "Unique identities" in page
+        assert 'aria-label="Source type"' in page
+        assert 'aria-selected="true"' in page
+        assert "Video / RTSP" in page
+        assert "Webcam" in page
+        assert "Recent entry &amp; exit events" in page
         assert "/video.mjpg" in page
 
     with urllib.request.urlopen(base_url + "/api/status") as response:

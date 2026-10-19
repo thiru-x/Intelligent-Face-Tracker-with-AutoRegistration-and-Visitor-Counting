@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 1680 950" style="height:auto" role="img" aria-labelledby="title description">
+  <title id="title">Local face visitor monitoring architecture</title>
+  <desc id="description">Video sources enter an OpenCV and YOLO plus InsightFace processing pipeline. Tracking and embedding similarity resolve persistent identities, visitor state creates entry and exit events, and SQLite, local image and audit files, and a localhost dashboard receive the results.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f6f9f7"/>
+      <stop offset="1" stop-color="#edf3ef"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#f8fbf9"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 10 5 0 10Z" fill="#62836d"/>
+    </marker>
+    <marker id="arrowMint" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0 0 10 5 0 10Z" fill="#2e9561"/>
+    </marker>
+    <style>
+      text { font-family: "Segoe UI", Arial, sans-serif; }
+      .eyebrow { fill: #2e9561; font-size: 15px; font-weight: 700; letter-spacing: 2.2px; }
+      .title { fill: #17251c; font-size: 36px; font-weight: 700; letter-spacing: -1px; }
+      .subtitle { fill: #64746a; font-size: 17px; }
+      .node { fill: url(#card); stroke: #d8e3dc; stroke-width: 2; }
+      .node-title { fill: #1c2e22; font-size: 18px; font-weight: 700; }
+      .node-copy { fill: #66776c; font-size: 14px; }
+      .num { fill: #e5f4e9; }
+      .num-text { fill: #2e9561; font-size: 13px; font-weight: 700; }
+      .section { fill: #64746a; font-size: 13px; font-weight: 700; letter-spacing: 1.8px; }
+      .connector { fill: none; stroke: #83a48c; stroke-width: 3; marker-end: url(#arrow); }
+      .branch { fill: none; stroke: #83a48c; stroke-width: 2.5; }
+      .persist { fill: none; stroke: #2e9561; stroke-width: 2.5; stroke-dasharray: 7 7; marker-end: url(#arrowMint); }
+      .pill { fill: #e8f5eb; stroke: #d2e9d8; }
+      .pill-text { fill: #34724b; font-size: 12px; font-weight: 700; }
+      .foot { fill: #66776c; font-size: 14px; }
+      .db { fill: #f1f8f2; stroke: #a8cdb1; stroke-width: 2; }
+      .files { fill: #f7f5ec; stroke: #e3d7ac; stroke-width: 2; }
+      .web { fill: #eff4fa; stroke: #cbd8ea; stroke-width: 2; }
+    </style>
+  </defs>
+  <rect width="1680" height="950" rx="28" fill="url(#bg)"/>
+  <circle cx="1550" cy="90" r="180" fill="#dceee1" opacity=".48"/>
+  <text x="70" y="64" class="eyebrow">KATOMARAN HACKATHON · LOCAL-FIRST COMPUTER VISION</text>
+  <text x="70" y="112" class="title">Face visitor monitoring — system architecture</text>
+  <text x="70" y="145" class="subtitle">Detection finds face boxes; embeddings identify returning visitors; visits and evidence are persisted locally.</text>
+
+  <text x="70" y="195" class="section">01  VIDEO INPUT AND FRAME PROCESSING</text>
+  <g>
+    <rect class="node" x="70" y="218" width="270" height="176" rx="16"/>
+    <circle class="num" cx="100" cy="250" r="16"/><text class="num-text" x="95" y="255">01</text>
+    <text class="node-title" x="126" y="256">Video sources</text>
+    <text class="node-copy" x="94" y="294"><tspan x="94" dy="0">Local video file</tspan><tspan x="94" dy="25">USB / local camera</tspan><tspan x="94" dy="25">RTSP network stream</tspan></text>
+
+    <rect class="node" x="385" y="218" width="270" height="176" rx="16"/>
+    <circle class="num" cx="415" cy="250" r="16"/><text class="num-text" x="410" y="255">02</text>
+    <text class="node-title" x="441" y="256">OpenCV capture</text>
+    <text class="node-copy" x="409" y="294"><tspan x="409" dy="0">Read and decode frames</tspan><tspan x="409" dy="25">UTC + source time metadata</tspan><tspan x="409" dy="25">Bounded RTSP reconnect</tspan></text>
+
+    <rect class="node" x="700" y="218" width="270" height="176" rx="16"/>
+    <circle class="num" cx="730" cy="250" r="16"/><text class="num-text" x="725" y="255">03</text>
+    <text class="node-title" x="756" y="256">Frame scheduling</text>
+    <text class="node-copy" x="724" y="294"><tspan x="724" dy="0">Configurable frame skip</tspan><tspan x="724" dy="25">Resize / confidence filters</tspan><tspan x="724" dy="25">Balances load and coverage</tspan></text>
+
+    <rect class="node" x="1015" y="218" width="270" height="176" rx="16"/>
+    <circle class="num" cx="1045" cy="250" r="16"/><text class="num-text" x="1040" y="255">04</text>
+    <text class="node-title" x="1071" y="256">Face detection + features</text>
+    <text class="node-copy" x="1039" y="294"><tspan x="1039" dy="0">YOLO: face bounding boxes</tspan><tspan x="1039" dy="25">InsightFace: face embeddings</tspan><tspan x="1039" dy="25">One-to-one IoU association</tspan></text>
+
+    <rect class="node" x="1330" y="218" width="280" height="176" rx="16"/>
+    <circle class="num" cx="1360" cy="250" r="16"/><text class="num-text" x="1355" y="255">05</text>
+    <text class="node-title" x="1386" y="256">Tracks + identity matcher</text>
+    <text class="node-copy" x="1354" y="294"><tspan x="1354" dy="0">Temporary OpenCV track IDs</tspan><tspan x="1354" dy="25">Cosine similarity threshold</tspan><tspan x="1354" dy="25">Stable persistent face_id</tspan></text>
+  </g>
+  <path class="connector" d="M340 306h35"/>
+  <path class="connector" d="M655 306h35"/>
+  <path class="connector" d="M970 306h35"/>
+  <path class="connector" d="M1285 306h35"/>
+
+  <text x="70" y="458" class="section">02  VISIT LIFECYCLE AND EVENT GENERATION</text>
+  <rect class="node" x="480" y="478" width="720" height="105" rx="16"/>
+  <text class="node-title" x="512" y="516">Visitor counter</text>
+  <text class="node-copy" x="512" y="546"><tspan x="512" dy="0">New identity → register once  ·  Known and present → keep the same visitor</tspan><tspan x="512" dy="22">Absent beyond timeout → exit event  ·  Later return → same face_id, new visit</tspan></text>
+  <rect class="pill" x="1220" y="501" width="142" height="32" rx="16"/>
+  <text class="pill-text" x="1240" y="522">ENTRY + EXIT</text>
+  <rect class="pill" x="1372" y="501" width="188" height="32" rx="16"/>
+  <text class="pill-text" x="1390" y="522">UTC + FRAME + MEDIA TIME</text>
+  <path class="connector" d="M1470 394v47H1200v70"/>
+  <text class="foot" x="1260" y="433">resolved observations</text>
+
+  <text x="70" y="652" class="section">03  DURABLE LOCAL OUTPUTS</text>
+  <path class="branch" d="M840 583v36H340v18M840 619h500v18"/>
+  <path class="connector" d="M340 619v18"/>
+  <path class="connector" d="M840 619v18"/>
+  <path class="connector" d="M1340 619v18"/>
+
+  <rect class="db" x="100" y="638" width="480" height="190" rx="16"/>
+  <text class="node-title" x="130" y="680">SQLite database</text>
+  <text class="node-copy" x="130" y="711"><tspan x="130" dy="0">faces: face IDs + binary embeddings + model metadata</tspan><tspan x="130" dy="24">events: entry / exit, UTC timestamp, image path</tspan><tspan x="130" dy="24">audit_log: durable outbox with delivery acknowledgement</tspan></text>
+
+  <rect class="files" x="600" y="638" width="480" height="190" rx="16"/>
+  <text class="node-title" x="630" y="680">Local images and logs</text>
+  <text class="node-copy" x="630" y="711"><tspan x="630" dy="0">logs/entries/YYYY-MM-DD/ and logs/exits/…</tspan><tspan x="630" dy="24">events.log: structured JSONL audit trail, replay-safe</tspan><tspan x="630" dy="24">application.log: rotating operational diagnostics</tspan></text>
+
+  <rect class="web" x="1100" y="638" width="480" height="190" rx="16"/>
+  <text class="node-title" x="1130" y="680">Local browser dashboard</text>
+  <text class="node-copy" x="1130" y="711"><tspan x="1130" dy="0">127.0.0.1 API controls the processing worker</tspan><tspan x="1130" dy="24">MJPEG annotated feed + counts + recent event table</tspan><tspan x="1130" dy="24">No face data sent to a remote dashboard service</tspan></text>
+
+  <path class="persist" d="M340 638V605H1465V394"/>
+  <rect class="pill" x="601" y="589" width="232" height="28" rx="14"/>
+  <text class="pill-text" x="621" y="608">PERSISTED IDENTITY LOOKUP</text>
+  <text class="foot" x="70" y="882">Audit delivery: commit outbox row → append and flush JSONL → acknowledge delivery; pending records can be replayed after interruption.</text>
+  <text class="foot" x="70" y="911">Biometric data is sensitive: use appropriate consent, protect local access, define retention, and calibrate thresholds on representative samples.</text>
+</svg>
