@@ -177,6 +177,17 @@ accepts as well as false rejects before using the system for consequential
 decisions. Frame skipping and inference resolution trade speed for the chance
 of missing small or fast-moving faces. Measure FPS on the deployment hardware.
 
+### Measured compute load
+
+A short CPU inference benchmark on the configured 4K sample video measured
+3.405 seconds per processed frame for YOLO plus InsightFace with frame skip 8,
+approximately 2.35 source frames per second before capture or other pipeline
+overhead. This does not sustain a 29.97 FPS source. Process use was about
+78.2% of the machine's 16 logical processors during the measured interval.
+An NVIDIA GPU is present, but this environment has CPU-only PyTorch and no
+ONNX Runtime CUDA provider, so GPU performance was not measured. See the
+[benchmark environment, method, results, and limitations](docs/COMPUTE_BENCHMARK.md).
+
 ## Sample outputs
 
 The [`sample_outputs/`](sample_outputs/) folder contains synthetic examples of
