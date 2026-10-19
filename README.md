@@ -15,11 +15,7 @@ overlapping embedding is not registered as a person.
 ![Architecture diagram](docs/architecture.svg)
 
 The [architecture diagram](docs/architecture.svg) shows the full frame-to-event
-flow. The [Loom walkthrough script](PROJECT_DEMO_SCRIPT.md) contains a timed
-narration, screen directions, configuration and FPS explanations, privacy
-notes, and a pre-recording checklist. Add the final Loom URL here before
-submitting the project.
-
+flow. 
 ## Windows setup
 
 Use Python 3.11 and create a virtual environment:
